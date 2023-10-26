@@ -28,4 +28,14 @@ instance (Field a) => Field (a, a) where
   fneg = tmap fneg  
   zero = (Field.zero, Field.zero)
   one = (Field.one, Field.one)
+-- 0 = false
+-- 1 = true
+-- fmul a b = xor
+instance Field Bool where
+    zero = False
+    one = True
 
+    fmul = (&&)
+    fadd = (\x y -> not (x == y))
+    fminv = not
+    fneg = id

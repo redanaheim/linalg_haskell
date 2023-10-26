@@ -34,6 +34,5 @@ instance (Field a) => Vector [a] where
 instance (Field a) => InnerProduct [a] where
   inner x y = foldr fadd Field.zero (fmap (\el -> uncurry Field.fmul el) (zip x y))
 
-
 main = do
     print (inner (1.0 :: Double) (4.5 :: Double))

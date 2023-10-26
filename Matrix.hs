@@ -75,8 +75,6 @@ instance (Field a) => Vector (Matrix a) where
     vneg = smap Field.fneg
     fmul x c = smap (Field.fmul c) x
 
-
 main = do
-    let m = Matrix 3 3 [[1, 0, 2], [1, 2, 3], [1, 4, 6]] :: Matrix Double
-    let m2 = smap (\x -> (x, x)) m
-    print (mmul (smap (Field.fmul (2.0, 3.0)) m2) (vadd (id_mat 3) (transpose (id_mat 3)) :: Matrix (Double, Double)))
+    let m = Matrix 3 3 [[True, False, True], [True, False, False], [False, True, True]] :: Matrix Bool
+    print (mmul (smap (Field.fadd True) m) m)
