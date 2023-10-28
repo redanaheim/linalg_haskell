@@ -62,7 +62,7 @@ Matrix instantiates `Vector`.
 ## Current Goals (in no particular order)
 
 1. Matrix multiplication (done)
-2. Reduced row-echelon form
+2. Reduced row-echelon form (done)
 3. Represent linear transformations on arbitrary vector spaces with matrices
 4. Get bases for the image and kernel of arbitrary linear transformations
 5. Represent the vector space of all polynomial functions
