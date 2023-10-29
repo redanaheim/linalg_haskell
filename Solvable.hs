@@ -2,11 +2,11 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE DatatypeContexts #-}
-module Solvable where
 import Vector
 import Field
-import Matrix
+import Util
 import Data.Ratio (Ratio)
+import Matrix
 
 class (Vector a) => Solvable a where
     -- viewing [a] as a basis, returns the coefficient of the basis element specified by the Int in the basis expansion of an element
@@ -32,8 +32,14 @@ get_coord_through_isomorphism t basis_b element_b basis_index = do
     let component_b = forward t component_a
     Field.fmul (inner component_b basis_element_b) (Field.fminv (inner basis_element_b basis_element_b))
 
+instance (Field a) => Solvable [a] where
+    get_coord basis vector index = fidx index (do_ops_col (fst (rref (from_columns (length basis) (length (head basis)) basis))) vector)
+
+instance (Field a) => Solvable (Matrix a) where
+    get_coord basis vector = get_coord (fmap flatten basis) (flatten vector)
+
 main = do
     let t = Isomorphism transpose transpose :: Isomorphism (Matrix (Ratio Integer)) (Matrix (Ratio Integer))
-    let m = Matrix 3 5 [[1, 4, 1, 5, 9], [2, 6, 5, 3, 5], [8, 5, 9, 5 7]] :: Matrix (Ratio Integer)
-    let basis_a = mat_std_basis 3 5
+    let m = from_rows 3 2 [[1, 4], [2, 6], [8, 5]] :: Matrix (Ratio Integer)
+    let basis_a = [risky_rows [[1, 2], [1, 0], [2, 0]], risky_rows [[2, 1], [1, 0], [2, 0]], risky_rows [[3, 1], [4, 1], [5, 1]], risky_rows [[2, 1], [1, 0], [0, 2]], risky_rows [[2, 1], [0, 1], [0, 2]], risky_rows [[1, 1], [1, 1], [1, 1]]]
     print (basis_coords basis_a m)

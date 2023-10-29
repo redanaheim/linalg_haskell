@@ -69,3 +69,4 @@ Matrix instantiates `Vector`.
 6. Get change-of-basis matrices
 7. Gram-Schmidt process
 8. Get the orthogonal complement of a subspace spanned by some set of vectors
+9. Safety on creating matrices of the wrong size

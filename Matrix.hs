@@ -5,12 +5,13 @@ module Matrix where
 import Field
 import Vector hiding (main)
 import Data.Kind
-import Data.List hiding (transpose)
+import Data.List hiding (partition, transpose)
 import Control.Monad (join)
 import Data.Maybe
 import Text.Printf (printf)
 import Data.Ratio (Ratio)
 import Util
+import Data.Sequence (chunksOf)
 
 data Matrix a where
     Matrix :: (Field a) => {
@@ -74,8 +75,17 @@ instance (Field a) => Show (Matrix a) where
 fill_by :: (Field a) => Int -> Int -> (Int -> Int -> a) -> Matrix a
 fill_by r c f = Matrix r c [[ f i j | j <- [1 .. c]] | i <- [1 .. r]]
 
+from_rows :: (Field a) => Int -> Int -> [[a]] -> Matrix a
+from_rows = Matrix
+
+risky_rows :: (Field a) => [[a]] -> Matrix a
+risky_rows c = Matrix (length c) (length (head c)) c
+
 from_columns :: (Field a) => Int -> Int -> [[a]] -> Matrix a
 from_columns r c content = fill_by r c (\i j -> fromJust (idx content j i))
+
+risky_columns :: (Field a) => [[a]] -> Matrix a
+risky_columns c = from_columns (length (head c)) (length c) c
 
 id_mat :: (Field a) => Int -> Matrix a
 id_mat s = fill_by s s (\i j -> if i == j then Field.one else Field.zero)
@@ -90,6 +100,16 @@ mmul :: Field a => Matrix a -> Matrix a -> Matrix a
 mmul m1 m2 = fill_by (rows m1) (cols m2) (\i j -> dot (fromJust (row m1 i)) (fromJust (col m2 j)))
 
 transpose m = fill_by (cols m) (rows m) (\i j -> fromJust (midx m j i))
+
+flatten :: (Field a) => Matrix a -> [a]
+flatten = concat . content
+
+partition :: Int -> [a] -> [[a]]
+partition _ [] = []
+partition n xs = take n xs : partition n (drop n xs)
+
+unflatten :: (Field a) => Int -> Int -> [a] -> Matrix a
+unflatten r c l = from_rows r c (partition c l)
 
 data RowOp a where
     SwapRowOp :: {
@@ -146,8 +166,14 @@ do_op f = case f of
     MoveColumn -> id
     Done -> id
 
-fidx :: Int -> [a] -> a
-fidx i list = list !! (i - 1)
+do_ops :: (Field a) => [RowOp a] -> Matrix a -> Matrix a
+do_ops ops mat = foldr do_op mat ops
+
+do_op_col :: (Field a) => RowOp a -> [a] -> [a]
+do_op_col op c = fromJust (col (do_op op (from_columns (length c) 1 [c])) 1)
+
+do_ops_col :: (Field a) => [RowOp a] -> [a] -> [a]
+do_ops_col ops c = foldr do_op_col c ops
 
 -- gets the row op to apply given a matrix column
 -- first argument is the row of the current pivot
