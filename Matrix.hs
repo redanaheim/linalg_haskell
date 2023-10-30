@@ -197,26 +197,37 @@ get_op pivot col
     | fidx pivot col == Field.zero = fill_pivot_op pivot (idx_first_nonzero_val (<= pivot) col)
     | otherwise = make_pivot_one_op pivot col
 
-partial_rref :: (Field a) => Int -> Int -> ([RowOp a], Matrix a) -> ([RowOp a], Matrix a)
+data RREFState a where
+    RREFState :: (Field a) => { row_ops_log :: [RowOp a], pivots_list :: [Int], matrix_result :: Matrix a} -> RREFState a
+
+instance (Field a) => Show (RREFState a) where
+  show state = "\n" ++ show (row_ops_log state) ++ "\n" ++ show (pivots_list state) ++ "\n" ++ show (matrix_result state) ++ "\n"
+
+
+blank_rref_state :: (Field a) => Matrix a -> RREFState a
+blank_rref_state = RREFState [] []
+
+partial_rref :: (Field a) => Int -> Int -> RREFState a -> RREFState a
 
 partial_rref pivot col_idx state = do
-    let log = fst state
-    let mat = snd state
+    let log = row_ops_log state
+    let pivots = pivots_list state
+    let mat = matrix_result state
     let c = col mat col_idx
     maybe state (
         \val ->
         do
             let op = get_op pivot val
             case op of
-                MovePivot -> partial_rref (pivot + 1) (col_idx + 1) (op:log, do_op op mat)
-                MoveColumn -> partial_rref pivot (col_idx + 1) (op:log, do_op op mat)
+                MovePivot -> partial_rref (pivot + 1) (col_idx + 1) (RREFState (op:log) (col_idx:pivots) (do_op op mat))
+                MoveColumn -> partial_rref pivot (col_idx + 1) (RREFState (op:log) pivots (do_op op mat))
                 Done -> state
-                _ -> partial_rref pivot col_idx (op:log, do_op op mat)
+                _ -> partial_rref pivot col_idx (RREFState (op:log) pivots (do_op op mat))
 
         ) c
 
-rref :: (Field a) => Matrix a -> ([RowOp a], Matrix a)
-rref m = partial_rref 1 1 ([], m)
+rref :: (Field a) => Matrix a -> RREFState a
+rref m = partial_rref 1 1 (blank_rref_state m)
 
 dsmap :: (Field a, Field b, Field c) => (a -> b -> c) -> Matrix a -> Matrix b -> Matrix c
 dsmap f m1 m2 = fill_by (rows m1) (cols m1) (\i j -> f (fromJust (midx m1 i j)) (fromJust (midx m2 i j)))

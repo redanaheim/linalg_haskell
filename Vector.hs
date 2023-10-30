@@ -1,4 +1,6 @@
 {-# Language TypeFamilies, AllowAmbiguousTypes #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use camelCase" #-}
 module Vector where
 import Field
 import Data.Kind
@@ -31,8 +33,14 @@ instance (Field a) => Vector [a] where
     fmul x c = fmap (`Field.fmul` c) x
     vneg = fmap fneg
 
+ifmap :: (a -> Int -> b) -> [a] -> [b]
+ifmap func list = fmap (uncurry func) (zip list (scanl (+) (1 :: Int) (repeat 1)))
+
 dot :: (Field a) => [a] -> [a] -> a
 dot x y = foldr (fadd . uncurry Field.fmul) Field.zero (zip x y)
 
 instance (Field a) => InnerProduct [a] where
     inner = dot
+
+std_coordinates :: (Field a) => Int -> [[a]]
+std_coordinates len = [[(if i == j then Field.one else Field.zero) | j <- [1..len]] | i <- [1..len]]

@@ -16,6 +16,11 @@ class (Vector a) => Solvable a where
 basis_coords :: (Solvable a) => [a] -> a -> [Scalar a]
 basis_coords basis x = fmap (get_coord basis x) [1..length basis]
 
+evaluate_basis_coords :: (Solvable a) => [a] -> [Scalar a] -> a
+-- artifact of the fact that soem vector implementations are not really vector spaces
+-- they can't have one unique zero vector so to get the right size zero vector we use Vector.fmul
+evaluate_basis_coords basis coords = foldr vadd (Vector.fmul (head basis) Field.zero) (zipWith Vector.fmul basis coords)
+
 data Isomorphism a b where
     Isomorphism :: (Vector a, Vector b) => { forward :: a -> b, backward :: b -> a } -> Isomorphism a b
 
@@ -33,13 +38,29 @@ get_coord_through_isomorphism t basis_b element_b basis_index = do
     Field.fmul (inner component_b basis_element_b) (Field.fminv (inner basis_element_b basis_element_b))
 
 instance (Field a) => Solvable [a] where
-    get_coord basis vector index = fidx index (do_ops_col (fst (rref (from_columns (length basis) (length (head basis)) basis))) vector)
+    get_coord basis vector index = fidx index (do_ops_col (row_ops_log (rref (from_columns (length basis) (length (head basis)) basis))) vector)
 
 instance (Field a) => Solvable (Matrix a) where
     get_coord basis vector = get_coord (fmap flatten basis) (flatten vector)
 
+data LinearTransformation a b where
+    LinearTransformation :: (Vector a, Vector b) => { morphism :: a -> b } -> LinearTransformation a b
+
+get_matrix :: (Solvable a, Solvable b, Scalar a ~ Scalar b) => [a] -> [b] -> LinearTransformation a b -> Matrix (Scalar b)
+get_matrix basis_a basis_b transform = risky_columns [basis_coords basis_b (morphism transform (fidx i basis_a)) | i <- [1..(length basis_a)]]
+
+get_image_basis :: (Solvable a) => [a] -> LinearTransformation a a -> [[Scalar a]]
+get_image_basis basis transform = do
+    let matrix = get_matrix basis basis transform
+    let reduced_matrix = rref matrix
+    let transposed = transpose matrix
+    [ fidx i (content transposed) | i <- pivots_list reduced_matrix ]
+
+change_of_basis_matrix :: (Solvable a) => [a] -> [a] -> Matrix (Scalar a)
+change_of_basis_matrix basis_a basis_b = get_matrix basis_a basis_b (LinearTransformation id)
+
 main = do
-    let t = Isomorphism transpose transpose :: Isomorphism (Matrix (Ratio Integer)) (Matrix (Ratio Integer))
-    let m = from_rows 3 2 [[1, 4], [2, 6], [8, 5]] :: Matrix (Ratio Integer)
-    let basis_a = [risky_rows [[1, 2], [1, 0], [2, 0]], risky_rows [[2, 1], [1, 0], [2, 0]], risky_rows [[3, 1], [4, 1], [5, 1]], risky_rows [[2, 1], [1, 0], [0, 2]], risky_rows [[2, 1], [0, 1], [0, 2]], risky_rows [[1, 1], [1, 1], [1, 1]]]
-    print (basis_coords basis_a m)
+    let basis = [[1, -1, 0], [-1, 0, 1], [1, 1, 1]] :: [[Ratio Integer]]
+    let std = std_coordinates 3 :: [[Ratio Integer]]
+    let transform = LinearTransformation (evaluate_basis_coords basis . ifmap (\a i ->  if i == 3 then 0 else a) . basis_coords basis)
+    print (fmap (`Vector.fmul` 3) (get_image_basis std transform))

@@ -63,7 +63,7 @@ Matrix instantiates `Vector`.
 
 1. Matrix multiplication (done)
 2. Reduced row-echelon form (done)
-3. Represent linear transformations on arbitrary vector spaces with matrices
+3. Represent linear transformations on arbitrary vector spaces with matrices (done!)
 4. Get bases for the image and kernel of arbitrary linear transformations
 5. Represent the vector space of all polynomial functions
 6. Get change-of-basis matrices
