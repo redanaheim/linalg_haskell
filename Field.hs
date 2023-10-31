@@ -1,5 +1,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use bimap" #-}
+{-# HLINT ignore "Use camelCase" #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Field where
 import Data.Ratio
 
@@ -32,6 +34,19 @@ instance (Field a) => Field (a, a) where
   fneg = tmap fneg
   zero = (Field.zero, Field.zero)
   one = (Field.one, Field.one)
+
+slow_int_mul :: (Field a) => Int -> a -> a
+slow_int_mul c x
+    | c < 0 = Field.fadd (Field.fneg x) (slow_int_mul (c + 1) x)
+    | c == 0 = Field.zero
+    | otherwise = Field.fadd x (slow_int_mul (c - 1) x)
+
+slow_exp :: (Field a) => a -> Int -> a
+slow_exp base pow 
+    | pow < 0 = Field.fmul (Field.fminv base) (slow_exp base (pow + 1))
+    | pow == 0 = Field.one
+    | pow > 0 = Field.fmul base (slow_exp base (pow - 1))
+
 -- 0 = false
 -- 1 = true
 -- fmul a b = xor

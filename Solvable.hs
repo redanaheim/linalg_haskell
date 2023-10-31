@@ -2,6 +2,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 {-# LANGUAGE DatatypeContexts #-}
+module Solvable where
 import Vector
 import Field
 import Util
@@ -77,13 +78,3 @@ get_kernel_basis basis transform = do
 
 change_of_basis_matrix :: (Solvable a) => [a] -> [a] -> Matrix (Scalar a)
 change_of_basis_matrix basis_a basis_b = get_matrix basis_a basis_b (LinearTransformation id)
-
-main = do
-    let basis = [[1, -1, 0], [-1, 0, 1], [1, 1, 1]] :: [[Ratio Integer]]
-    let std = std_coordinates 3 :: [[Ratio Integer]]
-    let transform = LinearTransformation (evaluate_basis_coords basis . ifmap (\a i ->  if i == 3 then 0 else a) . basis_coords basis)
-    let matrix = get_matrix std std transform
-    let reduced_matrix = rref matrix
-    print reduced_matrix
-    print (filter (\i -> i `notElem` pivots_list reduced_matrix) [1..(cols matrix)])
-    print (get_kernel_basis std transform)
