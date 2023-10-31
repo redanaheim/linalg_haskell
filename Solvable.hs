@@ -7,6 +7,8 @@ import Field
 import Util
 import Data.Ratio (Ratio)
 import Matrix
+import Data.List (elemIndex)
+import Data.Maybe (isNothing, fromJust)
 
 class (Vector a) => Solvable a where
     -- viewing [a] as a basis, returns the coefficient of the basis element specified by the Int in the basis expansion of an element
@@ -56,6 +58,23 @@ get_image_basis basis transform = do
     let transposed = transpose matrix
     [ fidx i (content transposed) | i <- pivots_list reduced_matrix ]
 
+get_kernel_basis_component :: (Field a) => Matrix a -> [Int] -> Int -> Int -> a
+get_kernel_basis_component m pivots c free_column = do
+    let row_idx_maybe = fmap (+ 1) (elemIndex c pivots)
+    if isNothing row_idx_maybe then (if c == free_column then Field.one else Field.zero) else
+        (do
+            let row_idx = fromJust row_idx_maybe
+            Field.fneg (fromJust (midx m row_idx free_column))
+        )
+
+get_kernel_basis :: (Solvable a) => [a] -> LinearTransformation a a -> [[Scalar a]]
+get_kernel_basis basis transform = do
+    let matrix = get_matrix basis basis transform
+    let reduced_matrix = rref matrix
+    let transposed = transpose matrix
+    let free_columns = filter (\i -> i `notElem` pivots_list reduced_matrix) [1..(cols matrix)]
+    [[get_kernel_basis_component (matrix_result reduced_matrix) (pivots_list reduced_matrix) c f | c <- [1..cols matrix]] | f <- free_columns]
+
 change_of_basis_matrix :: (Solvable a) => [a] -> [a] -> Matrix (Scalar a)
 change_of_basis_matrix basis_a basis_b = get_matrix basis_a basis_b (LinearTransformation id)
 
@@ -63,4 +82,8 @@ main = do
     let basis = [[1, -1, 0], [-1, 0, 1], [1, 1, 1]] :: [[Ratio Integer]]
     let std = std_coordinates 3 :: [[Ratio Integer]]
     let transform = LinearTransformation (evaluate_basis_coords basis . ifmap (\a i ->  if i == 3 then 0 else a) . basis_coords basis)
-    print (fmap (`Vector.fmul` 3) (get_image_basis std transform))
+    let matrix = get_matrix std std transform
+    let reduced_matrix = rref matrix
+    print reduced_matrix
+    print (filter (\i -> i `notElem` pivots_list reduced_matrix) [1..(cols matrix)])
+    print (get_kernel_basis std transform)
