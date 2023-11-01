@@ -65,8 +65,8 @@ Matrix instantiates `Vector`.
 2. Reduced row-echelon form (done)
 3. Represent linear transformations on arbitrary vector spaces with matrices (done!)
 4. Get bases for the image and kernel of arbitrary linear transformations (done!)
-5. Represent the vector space of all polynomial functions
-6. Get change-of-basis matrices
-7. Gram-Schmidt process
+5. Represent the vector space of all polynomial functions (done!)
+6. Get change-of-basis matrices (done!)
+7. Gram-Schmidt process (done!)
 8. Get the orthogonal complement of a subspace spanned by some set of vectors
 9. Safety on creating matrices of the wrong size
