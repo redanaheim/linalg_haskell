@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
+module Polynomial where
 import Vector
 import Matrix
 import Solvable
@@ -47,13 +48,3 @@ polynomial_std_basis l = [ polynomial_std_basis_component i l | i <- [1..l]]
 
 constant :: (Field a) => Int -> a -> Polynomial a
 constant l c = Polynomial (take l (c : repeat Field.zero))
-
-main = do
-    let std = polynomial_std_basis 5 :: [Polynomial (Ratio Integer)]
-    let p = Polynomial [1, 2, 3, 4, 5] :: Polynomial (Ratio Integer)
-    let basis = [Polynomial [1, 1, 1, 1, 1], Polynomial [1, 0, 1, 0, 1], Polynomial [1, 2, 3, 4, 5], Polynomial [1, 0, 0, 0, 0], Polynomial [0, 1, 0, 0, 0]] :: [Polynomial (Ratio Integer)]
-    let d = LinearTransformation (\val -> Vector.vadd (derivative val) (constant 5 (evaluate val 1)))
-    print (slow_exp (2 :: (Ratio Integer)) 2)
-    print ((ifmap (\c i -> Field.fmul c (slow_exp 2 i)) . coefs) (head basis))
-    print (evaluate (head basis) 2)
-    print (get_matrix basis basis d)

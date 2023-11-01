@@ -1,4 +1,4 @@
-{-# Language TypeFamilies, AllowAmbiguousTypes #-}
+{-# Language TypeFamilies, AllowAmbiguousTypes, UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use camelCase" #-}
 module Vector where
@@ -41,6 +41,12 @@ dot x y = foldr (fadd . uncurry Field.fmul) Field.zero (zip x y)
 
 instance (Field a) => InnerProduct [a] where
     inner = dot
+
+line_project :: (InnerProduct a) => a -> a -> a
+line_project unit x = Vector.fmul unit (inner unit x)
+
+project :: (InnerProduct a) => [a] -> a -> a
+project orthonormal_basis x = foldr (vadd . (`line_project` x)) (Vector.fmul x Field.zero) orthonormal_basis
 
 std_coordinates :: (Field a) => Int -> [[a]]
 std_coordinates len = [[(if i == j then Field.one else Field.zero) | j <- [1..len]] | i <- [1..len]]

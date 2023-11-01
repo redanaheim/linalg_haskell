@@ -27,7 +27,6 @@ tdmap :: (a -> a -> a) -> (a, a) -> (a, a) -> (a, a)
 tdmap f x y = (f (fst x) (fst y), f (snd x) (snd y))
 
 instance (Field a) => Field (a, a) where
-  fadd :: Field a => (a, a) -> (a, a) -> (a, a)
   fadd = tdmap fadd
   fmul = tdmap fmul
   fminv = tmap fminv
@@ -69,3 +68,16 @@ instance Field (Ratio Integer) where
     fneg x = (-1 * numerator x) % denominator x
     zero = 0 % 1
     one = 1 % 1
+
+class (Field a) => RealField a where
+    exp :: a -> a
+    log :: a -> a
+    midpoint :: a -> a -> a
+    
+euler :: Double = 2.7182818284590452353602874
+
+instance RealField Double where
+    exp x = euler ** x
+    log = Prelude.log
+
+    midpoint x y = (x + y) / 2
