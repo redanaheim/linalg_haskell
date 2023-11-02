@@ -28,10 +28,11 @@ qr_factorize m = do
     let q = risky_columns (gram_schmidt (content (transpose m)))
     let r = change_of_basis_matrix (content (transpose m)) (content (transpose q))
     (q, r)
+    
+orthogonal_complement :: (Field (Scalar a), Solvable a, InnerProduct a, NormedSpace a) => [a] -> [a] -> [[Scalar a]]
+orthogonal_complement space_basis set_basis = get_kernel_basis space_basis (LinearTransformation (project (gram_schmidt set_basis))) 
 
 main = do
-    let basis = [[-2, -1, 1], [-2, -5, 7], [-2, -1, -5], [-2, -5, 1]] :: [[Double]]
-    let mat = Matrix 4 3 basis
-    print mat
-    print (fst (qr_factorize mat))
-    print (snd (qr_factorize mat))
+    let basis = [[RationalConst (-2), RationalConst (-3), RationalConst 2], [RationalConst 0, RationalConst (-1), RationalConst 1]] :: [[Expression]]
+    print (fmap (fmap (simplify . simplify)) (gram_schmidt basis))
+    print (fmap (fmap (compute (ComputationContext (const 1)))) (gram_schmidt basis))
